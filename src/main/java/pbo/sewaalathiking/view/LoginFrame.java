@@ -141,13 +141,9 @@ public class LoginFrame extends javax.swing.JFrame {
 
             // Redirect berdasarkan Role
             if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-                // Membuka Halaman Pemilik Toko / Admin
-                // new AdminDashboardFrame(user).setVisible(true);
-                JOptionPane.showMessageDialog(this, "Membuka Dashboard Admin...");
+                new AdminDashboardFrame(user).setVisible(true);
             } else if ("CUSTOMER".equalsIgnoreCase(user.getRole())) {
-                // Membuka Halaman Katalog Penyewa
-                // new CustomerMainFrame(user).setVisible(true);
-                JOptionPane.showMessageDialog(this, "Membuka Katalog Penyewa...");
+               new CustomerMainFrame(user).setVisible(true);
             }
 
             // Tutup halaman Login setelah berhasil masuk
