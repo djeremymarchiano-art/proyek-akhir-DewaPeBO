@@ -60,4 +60,92 @@ public class EquipmentRepository {
         }
         return list;
     }
+
+    public Equipment getEquipmentById(int id) {
+        String query = "SELECT * FROM equipment WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Equipment(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getDouble("price_per_day"),
+                        rs.getInt("total_stock"),
+                        rs.getInt("available_stock")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Gagal mengambil detail alat: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean addEquipment(Equipment eq) {
+        if (eq.getPricePerDay() < 0 || eq.getTotalStock() < 0
+                || eq.getAvailableStock() < 0 || eq.getAvailableStock() > eq.getTotalStock()) {
+            return false;
+        }
+
+        String query = "INSERT INTO equipment (name, category, price_per_day, total_stock, available_stock) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, eq.getName());
+            pstmt.setString(2, eq.getCategory());
+            pstmt.setDouble(3, eq.getPricePerDay());
+            pstmt.setInt(4, eq.getTotalStock());
+            pstmt.setInt(5, eq.getAvailableStock());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal menambah alat: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateEquipment(Equipment eq) {
+        if (eq.getPricePerDay() < 0 || eq.getTotalStock() < 0
+                || eq.getAvailableStock() < 0 || eq.getAvailableStock() > eq.getTotalStock()) {
+            return false;
+        }
+
+        String query = "UPDATE equipment SET name = ?, category = ?, price_per_day = ?, total_stock = ?, available_stock = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, eq.getName());
+            pstmt.setString(2, eq.getCategory());
+            pstmt.setDouble(3, eq.getPricePerDay());
+            pstmt.setInt(4, eq.getTotalStock());
+            pstmt.setInt(5, eq.getAvailableStock());
+            pstmt.setInt(6, eq.getId());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal mengupdate alat: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean deleteEquipment(int id) {
+        String query = "DELETE FROM equipment WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus alat: " + e.getMessage());
+            return false;
+        }
+    }
 }
