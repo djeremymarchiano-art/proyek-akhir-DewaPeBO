@@ -5,10 +5,8 @@
 package pbo.sewaalathiking.view;
 
 import pbo.sewaalathiking.entity.Equipment;
-import pbo.sewaalathiking.entity.RentalDetail;
 import pbo.sewaalathiking.entity.User;
 import pbo.sewaalathiking.repository.EquipmentRepository;
-import pbo.sewaalathiking.repository.RentalRepository;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -23,8 +21,8 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CustomerCatalogFrame.class.getName());
 
     private User currentUser;
+    private List<Object[]> cartList;
     private final EquipmentRepository equipmentRepo = new EquipmentRepository();
-    private final RentalRepository rentalRepo = new RentalRepository();
     
     /**
      * Creates new form CustomerCatalogueFrame
@@ -32,38 +30,35 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     public CustomerCatalogFrame() {
         initComponents();
         this.setLocationRelativeTo(null);
-        loadKatalogAlat();
     }
     
     public CustomerCatalogFrame(User user) {
+        this(user, new ArrayList<>());
+    }
+    
+    public CustomerCatalogFrame(User user, List<Object[]> existingCart) {
         initComponents();
         this.currentUser = user;
+        this.cartList = (existingCart != null) ? existingCart : new ArrayList<>();
         this.setLocationRelativeTo(null);
-        DefaultTableModel cartModel = new DefaultTableModel(
-            new Object[]{"ID Alat", "Nama Alat", "Harga/Hari", "Qty", "Subtotal/Hari"}, 0
+
+        setupTable();
+        loadKatalogAlat();
+        updateCartButtonLabel();
+    }
+    
+    private void setupTable() {
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{"ID", "Nama Alat", "Kategori", "Harga/Hari", "Stok Tersedia"}, 0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Agar sel tabel tidak bisa diedit manual
+                return false;
             }
         };
-        tabelKeranjang.setModel(cartModel);
-
-        loadKatalogAlat();
-
-        fieldDurasi.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-        });
-        
-        // Update total otomatis saat durasi diketik
-        fieldDurasi.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { hitungTotalKeseluruhan(); }
-        });
+        tabelAlat.setModel(model);
     }
+    
     private void loadKatalogAlat() {
         DefaultTableModel model = (DefaultTableModel) tabelAlat.getModel();
         model.setRowCount(0);
@@ -80,22 +75,12 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
         }
     }
     
-    private void hitungTotalKeseluruhan() {
-        DefaultTableModel cartModel = (DefaultTableModel) tabelKeranjang.getModel();
-        double totalPerHari = 0;
-        for (int i = 0; i < cartModel.getRowCount(); i++) {
-            totalPerHari += Double.parseDouble(cartModel.getValueAt(i, 4).toString());
-        }
-
-        int durasi = 1;
-        try {
-            durasi = Integer.parseInt(fieldDurasi.getText().trim());
-            if (durasi <= 0) durasi = 1;
-        } catch (NumberFormatException ignored) {}
-
-        double grandTotal = totalPerHari * durasi;
-        lblTotalBayar.setText("Total Estimasi (" + durasi + " Hari): Rp " + String.format("%,.0f", grandTotal));
+    private void updateCartButtonLabel() {
+        btnLihatKeranjang.setText("Lihat Keranjang (" + cartList.size() + ")");
     }
+    
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -112,15 +97,8 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         btnTambahKeranjang = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        tabelKeranjang = new javax.swing.JTable();
-        jLabel3 = new javax.swing.JLabel();
-        btnHapusItem = new javax.swing.JButton();
-        fieldDurasi = new javax.swing.JTextField();
-        lblTotalBayar = new javax.swing.JLabel();
-        btnAjukanSewa = new javax.swing.JButton();
         btnKembali = new javax.swing.JButton();
-        jLabel4 = new javax.swing.JLabel();
+        btnLihatKeranjang = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -152,41 +130,11 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
 
         jLabel2.setText("Katalog");
 
-        tabelKeranjang.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
-            },
-            new String [] {
-                "ID", "Nama Alat", "Harga", "Qty", "Subtotal"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, true
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        jScrollPane2.setViewportView(tabelKeranjang);
-
-        jLabel3.setText("Keranjang");
-
-        btnHapusItem.setText("Hapus Item");
-        btnHapusItem.addActionListener(this::btnHapusItemActionPerformed);
-
-        lblTotalBayar.setText("Total Estimasi : Rp.0");
-
-        btnAjukanSewa.setText("Ajukan Sewa");
-        btnAjukanSewa.addActionListener(this::btnAjukanSewaActionPerformed);
-
         btnKembali.setText("Kembali");
         btnKembali.addActionListener(this::btnKembaliActionPerformed);
 
-        jLabel4.setText("Berapa hari :");
+        btnLihatKeranjang.setText("Lihat Keranjang (0)");
+        btnLihatKeranjang.addActionListener(this::btnLihatKeranjangActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -194,95 +142,52 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(37, 37, 37)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(33, 33, 33)
+                                .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(btnTambahKeranjang))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(btnKembali)
-                            .addComponent(btnAjukanSewa))
-                        .addGap(63, 63, 63))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(37, 37, 37)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(33, 33, 33)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(fieldDurasi, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(39, 39, 39)
-                                        .addComponent(jLabel4))))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addComponent(lblTotalBayar, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)))
+                            .addComponent(btnLihatKeranjang))
+                        .addGap(62, 62, 62)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 419, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(143, 143, 143))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(143, 143, 143)))
                 .addGap(31, 31, 31))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(44, 44, 44)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnTambahKeranjang)
-                    .addComponent(btnHapusItem))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel3)
-                .addGap(223, 223, 223))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fieldDurasi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(28, 28, 28)
-                        .addComponent(btnTambahKeranjang)
-                        .addGap(56, 56, 56)))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnHapusItem)
-                    .addComponent(jLabel3))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(144, 144, 144)
-                        .addComponent(lblTotalBayar)
-                        .addGap(33, 33, 33)
-                        .addComponent(btnAjukanSewa)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnKembali)))
-                .addContainerGap())
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnTambahKeranjang)
+                .addGap(53, 53, 53)
+                .addComponent(btnLihatKeranjang)
+                .addGap(31, 31, 31)
+                .addComponent(btnKembali)
+                .addGap(42, 42, 42))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void btnHapusItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusItemActionPerformed
-        int selectedRow = tabelKeranjang.getSelectedRow();
-        if (selectedRow != -1) {
-            ((DefaultTableModel) tabelKeranjang.getModel()).removeRow(selectedRow);
-            hitungTotalKeseluruhan();
-        }
-    }//GEN-LAST:event_btnHapusItemActionPerformed
 
     private void btnTambahKeranjangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahKeranjangActionPerformed
         int selectedRow = tabelAlat.getSelectedRow();
@@ -302,74 +207,41 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Jumlah sewa tidak valid atau melebihi stok tersedia (" + stokTersedia + ")!");
                 return;
             }
-            DefaultTableModel cartModel = (DefaultTableModel) tabelKeranjang.getModel();
-            // Cek jika barang sudah ada di keranjang, akumulasikan qty-nya
-            for (int i = 0; i < cartModel.getRowCount(); i++) {
-                int existingId = Integer.parseInt(cartModel.getValueAt(i, 0).toString());
+            for (Object[] item : cartList) {
+                int existingId = Integer.parseInt(item[0].toString());
                 if (existingId == idAlat) {
-                    int newQty = Integer.parseInt(cartModel.getValueAt(i, 3).toString()) + qty;
+                    int newQty = Integer.parseInt(item[3].toString()) + qty;
                     if (newQty > stokTersedia) {
                         JOptionPane.showMessageDialog(this, "Total kuantitas di keranjang melebihi stok tersedia!");
                         return;
                     }
-                    cartModel.setValueAt(newQty, i, 3);
-                    cartModel.setValueAt(hargaPerHari * newQty, i, 4);
-                    hitungTotalKeseluruhan();
+                    item[3] = newQty;
+                    item[4] = hargaPerHari * newQty;
                     fieldQty.setText("");
+                    JOptionPane.showMessageDialog(this, "Jumlah \"" + namaAlat + "\" di keranjang diperbarui menjadi " + newQty + ".");
                     return;
                 }
             }
-            cartModel.addRow(new Object[]{idAlat, namaAlat, hargaPerHari, qty, hargaPerHari * qty});
-            hitungTotalKeseluruhan();
+
+            cartList.add(new Object[]{idAlat, namaAlat, hargaPerHari, qty, hargaPerHari * qty});
+            updateCartButtonLabel();
             fieldQty.setText("");
+            JOptionPane.showMessageDialog(this, "\"" + namaAlat + "\" ditambahkan ke keranjang!");
 
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Masukkan jumlah sewa dengan angka yang valid!");
         }
     }//GEN-LAST:event_btnTambahKeranjangActionPerformed
 
-    private void btnAjukanSewaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAjukanSewaActionPerformed
-        DefaultTableModel cartModel = (DefaultTableModel) tabelKeranjang.getModel();
-        if (cartModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Keranjang sewa masih kosong!");
-            return;
-        }
-
-        int durasiHari;
-        try {
-            durasiHari = Integer.parseInt(fieldDurasi.getText().trim());
-            if (durasiHari <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Masukkan durasi sewa (minimal 1 hari)!");
-            return;
-        }
-        List<RentalDetail> details = new ArrayList<>();
-        for (int i = 0; i < cartModel.getRowCount(); i++) {
-            RentalDetail rd = new RentalDetail();
-            rd.setEquipmentId(Integer.parseInt(cartModel.getValueAt(i, 0).toString()));
-            rd.setQuantity(Integer.parseInt(cartModel.getValueAt(i, 3).toString()));
-            double subtotalPerHari = Double.parseDouble(cartModel.getValueAt(i, 4).toString());
-            rd.setSubtotalPrice(subtotalPerHari * durasiHari);
-            details.add(rd);
-        }
-
-        boolean sukses = rentalRepo.createRental(currentUser.getId(), currentUser.getName(), durasiHari, details);
-        if (sukses) {
-            JOptionPane.showMessageDialog(this, 
-                "Penyewaan Berhasil!\nPengingat otomatis (H-1 hari, H-30 menit, H-10 menit) telah dijadwalkan.");
-            cartModel.setRowCount(0);
-            fieldDurasi.setText("");
-            lblTotalBayar.setText("Total Estimasi: Rp 0");
-            loadKatalogAlat(); // Refresh stok terbaru
-        } else {
-            JOptionPane.showMessageDialog(this, "Gagal memproses penyewaan. Periksa stok atau koneksi.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_btnAjukanSewaActionPerformed
-
     private void btnKembaliActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnKembaliActionPerformed
         new CustomerMainFrame(currentUser).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnKembaliActionPerformed
+
+    private void btnLihatKeranjangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLihatKeranjangActionPerformed
+        new CustomerCartFrame(currentUser, cartList).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnLihatKeranjangActionPerformed
 
     /**
      * @param args the command line arguments
@@ -397,20 +269,13 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnAjukanSewa;
-    private javax.swing.JButton btnHapusItem;
     private javax.swing.JButton btnKembali;
+    private javax.swing.JButton btnLihatKeranjang;
     private javax.swing.JButton btnTambahKeranjang;
-    private javax.swing.JTextField fieldDurasi;
     private javax.swing.JTextField fieldQty;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JLabel lblTotalBayar;
     private javax.swing.JTable tabelAlat;
-    private javax.swing.JTable tabelKeranjang;
     // End of variables declaration//GEN-END:variables
 }

@@ -194,4 +194,131 @@ public class RentalRepository {
         }
         return ids;
     }
+    // 1. Mengambil semua transaksi aktif beserta nama penyewanya (untuk tabel Admin)
+    public List<Object[]> getAllTransactionsForAdmin() {
+        List<Object[]> list = new ArrayList<>();
+        String query = "SELECT rt.id, u.name AS customer_name, rt.start_date, rt.expected_return_date, " +
+                       "rt.actual_return_date, rt.total_cost, rt.penalty_fee, rt.status " +
+                       "FROM rental_transactions rt " +
+                       "JOIN users u ON rt.user_id = u.id " +
+                       "ORDER BY FIELD(rt.status, 'ACTIVE', 'PENDING', 'COMPLETED', 'CANCELLED'), rt.id DESC";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                LocalDateTime expectedReturn = rs.getTimestamp("expected_return_date").toLocalDateTime();
+                String status = rs.getString("status");
+                double penalty = rs.getDouble("penalty_fee");
+
+                // Hitung denda berjalan jika barang belum dikembalikan
+                if ("ACTIVE".equalsIgnoreCase(status)) {
+                    penalty = calculatePenalty(expectedReturn, LocalDateTime.now());
+                }
+
+                Timestamp actualTs = rs.getTimestamp("actual_return_date");
+                LocalDateTime actualReturn = (actualTs != null) ? actualTs.toLocalDateTime() : null;
+
+                list.add(new Object[]{
+                    rs.getInt("id"),
+                    rs.getString("customer_name"),
+                    rs.getTimestamp("start_date").toLocalDateTime(),
+                    expectedReturn,
+                    actualReturn,
+                    rs.getDouble("total_cost"),
+                    penalty,
+                    status
+                });
+            }
+        } catch (SQLException e) {
+            System.err.println("Gagal mengambil daftar transaksi admin: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // 2. Mengambil rincian alat yang disewa pada satu transaksi (untuk pengecekan fisik barang)
+    public String getTransactionItemsSummary(int transactionId) {
+        StringBuilder sb = new StringBuilder();
+        String query = "SELECT e.name, rd.quantity FROM rental_details rd " +
+                       "JOIN equipment e ON rd.equipment_id = e.id " +
+                       "WHERE rd.transaction_id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, transactionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    sb.append("- ").append(rs.getString("name"))
+                      .append(" (").append(rs.getInt("quantity")).append(" unit)\n");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Gagal mengambil detail item: " + e.getMessage());
+        }
+        return sb.toString();
+    }
+
+    // 3. Memproses pengembalian barang, simpan denda final, dan kembalikan stok alat
+    public boolean processReturn(int transactionId) {
+        String getTxSql = "SELECT expected_return_date, status FROM rental_transactions WHERE id = ?";
+        String updateTxSql = "UPDATE rental_transactions SET actual_return_date = ?, penalty_fee = ?, status = 'COMPLETED' WHERE id = ?";
+        String getDetailsSql = "SELECT equipment_id, quantity FROM rental_details WHERE transaction_id = ?";
+        String restoreStockSql = "UPDATE equipment SET available_stock = available_stock + ? WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try {
+                LocalDateTime expectedReturn;
+                // Validasi status transaksi
+                try (PreparedStatement checkStmt = conn.prepareStatement(getTxSql)) {
+                    checkStmt.setInt(1, transactionId);
+                    try (ResultSet rs = checkStmt.executeQuery()) {
+                        if (!rs.next()) throw new SQLException("Transaksi tidak ditemukan.");
+                        if (!"ACTIVE".equalsIgnoreCase(rs.getString("status"))) {
+                            throw new SQLException("Transaksi ini sudah selesai atau dibatalkan.");
+                        }
+                        expectedReturn = rs.getTimestamp("expected_return_date").toLocalDateTime();
+                    }
+                }
+
+                // Hitung denda final saat pengembalian diproses
+                LocalDateTime actualReturn = LocalDateTime.now();
+                double finalPenalty = calculatePenalty(expectedReturn, actualReturn);
+
+                // Update status transaksi menjadi COMPLETED
+                try (PreparedStatement updateTxStmt = conn.prepareStatement(updateTxSql)) {
+                    updateTxStmt.setTimestamp(1, Timestamp.valueOf(actualReturn));
+                    updateTxStmt.setDouble(2, finalPenalty);
+                    updateTxStmt.setInt(3, transactionId);
+                    updateTxStmt.executeUpdate();
+                }
+
+                // Kembalikan stok semua alat yang ada di transaksi ini
+                try (PreparedStatement detailStmt = conn.prepareStatement(getDetailsSql);
+                     PreparedStatement stockStmt = conn.prepareStatement(restoreStockSql)) {
+                    detailStmt.setInt(1, transactionId);
+                    try (ResultSet rs = detailStmt.executeQuery()) {
+                        while (rs.next()) {
+                            stockStmt.setInt(1, rs.getInt("quantity"));
+                            stockStmt.setInt(2, rs.getInt("equipment_id"));
+                            stockStmt.executeUpdate();
+                        }
+                    }
+                }
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException ex) {
+                conn.rollback();
+                System.err.println("Gagal memproses pengembalian: " + ex.getMessage());
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("Koneksi error saat pengembalian: " + e.getMessage());
+            return false;
+        }
+    }
 }

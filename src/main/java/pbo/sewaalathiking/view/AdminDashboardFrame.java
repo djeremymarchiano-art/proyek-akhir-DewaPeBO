@@ -59,6 +59,7 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
         btnLogout.addActionListener(this::btnLogoutActionPerformed);
 
         btnNotifikasi.setText("Notifikasi Pengingat");
+        btnNotifikasi.addActionListener(this::btnNotifikasiActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -104,10 +105,14 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
 
     private void btnKelolaAlatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnKelolaAlatActionPerformed
         JOptionPane.showMessageDialog(this, "Membuka halaman Kelola Alat Hiking...");
+        new EquipmentManagementFrame(currentUser).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnKelolaAlatActionPerformed
 
     private void btnTransaksiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTransaksiActionPerformed
         JOptionPane.showMessageDialog(this, "Membuka halaman Transaksi & Pengembalian...");
+        new AdminTransactionFrame(currentUser).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnTransaksiActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
@@ -120,6 +125,11 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
         }
     
     }//GEN-LAST:event_btnLogoutActionPerformed
+
+    private void btnNotifikasiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNotifikasiActionPerformed
+        new NotificationFrame(currentUser).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNotifikasiActionPerformed
 
     /**
      * @param args the command line arguments

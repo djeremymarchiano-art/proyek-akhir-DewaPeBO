@@ -60,4 +60,59 @@ public class EquipmentRepository {
         }
         return list;
     }
+    // 1. Tambah Alat Baru (Stok tersedia awal sama dengan total stok)
+    public boolean addEquipment(Equipment eq) {
+        String query = "INSERT INTO equipment (name, category, price_per_day, total_stock, available_stock) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, eq.getName());
+            pstmt.setString(2, eq.getCategory());
+            pstmt.setDouble(3, eq.getPricePerDay());
+            pstmt.setInt(4, eq.getTotalStock());
+            pstmt.setInt(5, eq.getAvailableStock());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal menambah alat: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // 2. Update Data Alat (Nama, Kategori, Harga, Total Stok, & Stok Tersedia)
+    public boolean updateEquipment(Equipment eq) {
+        String query = "UPDATE equipment SET name = ?, category = ?, price_per_day = ?, total_stock = ?, available_stock = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, eq.getName());
+            pstmt.setString(2, eq.getCategory());
+            pstmt.setDouble(3, eq.getPricePerDay());
+            pstmt.setInt(4, eq.getTotalStock());
+            pstmt.setInt(5, eq.getAvailableStock());
+            pstmt.setInt(6, eq.getId());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal mengubah data alat: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // 3. Hapus Alat berdasarkan ID
+    public boolean deleteEquipment(int id) {
+        String query = "DELETE FROM equipment WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus alat: " + e.getMessage());
+            return false;
+        }
+    }
 }
