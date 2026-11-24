@@ -10,6 +10,13 @@ import pbo.sewaalathiking.repository.EquipmentRepository;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.awt.Image;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
@@ -19,6 +26,8 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(EquipmentManagementFrame.class.getName());
 
+    private String currentImagePath = null;
+    private List<Equipment> equipmentList;
     private User currentUser;
     private final EquipmentRepository equipmentRepo = new EquipmentRepository();
     private int selectedEquipmentId = -1;
@@ -59,8 +68,8 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) tabelAlat.getModel();
         model.setRowCount(0);
 
-        List<Equipment> list = equipmentRepo.getAllEquipment();
-        for (Equipment eq : list) {
+        equipmentList = equipmentRepo.getAllEquipment();
+        for (Equipment eq : equipmentList) {
             model.addRow(new Object[]{
                 eq.getId(),
                 eq.getName(),
@@ -73,12 +82,31 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     }
     private void resetForm() {
         selectedEquipmentId = -1;
-        fieldNama.setText("");
-        comboKategori.setSelectedIndex(0);
-        fieldHarga.setText("");
-        fieldTotalStok.setText("");
-        fieldStokTersedia.setText("");
-        tabelAlat.clearSelection();
+    currentImagePath = null;
+    fieldNama.setText("");
+    comboKategori.setSelectedIndex(0);
+    fieldHarga.setText("");
+    fieldTotalStok.setText("");
+    fieldStokTersedia.setText("");
+    tampilkanGambar(null);
+    tabelAlat.clearSelection();
+    }
+    
+    private void tampilkanGambar(String path) {
+        if (path != null && !path.isEmpty()) {
+            File file = new File(path);
+            if (file.exists()) {
+                ImageIcon icon = new ImageIcon(path);
+                int width = lblPreviewGambar.getWidth() > 0 ? lblPreviewGambar.getWidth() : 140;
+                int height = lblPreviewGambar.getHeight() > 0 ? lblPreviewGambar.getHeight() : 140;
+                Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                lblPreviewGambar.setIcon(new ImageIcon(scaled));
+                lblPreviewGambar.setText("");
+                return;
+            }
+        }
+        lblPreviewGambar.setIcon(null);
+        lblPreviewGambar.setText("No Image");
     }
 
     /**
@@ -106,6 +134,8 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        lblPreviewGambar = new javax.swing.JLabel();
+        btnPilihGambar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -153,53 +183,72 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
 
         jLabel4.setText("Input Stok Tersedia :");
 
+        lblPreviewGambar.setText("No Image");
+        lblPreviewGambar.setMaximumSize(new java.awt.Dimension(140, 140));
+        lblPreviewGambar.setMinimumSize(new java.awt.Dimension(140, 140));
+        lblPreviewGambar.setPreferredSize(new java.awt.Dimension(140, 140));
+
+        btnPilihGambar.setText("Pilih Gambar");
+        btnPilihGambar.addActionListener(this::btnPilihGambarActionPerformed);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGap(31, 31, 31)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnTambah)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnUbah)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnHapus)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnReset)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnKembali))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(31, 31, 31)
+                        .addComponent(jLabel4)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(fieldNama, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(comboKategori, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(fieldHarga, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(fieldTotalStok, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(fieldStokTersedia, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel1)
-                                        .addComponent(jLabel2))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(1, 1, 1)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 375, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(fieldNama, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(comboKategori, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fieldHarga, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fieldTotalStok, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fieldStokTersedia, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGap(1, 1, 1)))
+                            .addComponent(lblPreviewGambar, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnPilihGambar))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 375, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(btnTambah)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnUbah)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnHapus)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnReset)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnKembali)))))
                 .addGap(24, 24, 24))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(66, Short.MAX_VALUE)
+                .addContainerGap(12, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnHapus)
+                            .addComponent(btnReset)
+                            .addComponent(btnKembali)
+                            .addComponent(btnUbah)
+                            .addComponent(btnTambah))
+                        .addGap(31, 31, 31))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(fieldNama, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -216,16 +265,11 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
                         .addComponent(jLabel4)
                         .addGap(7, 7, 7)
                         .addComponent(fieldStokTersedia, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(67, 67, 67))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnHapus)
-                    .addComponent(btnReset)
-                    .addComponent(btnKembali)
-                    .addComponent(btnUbah)
-                    .addComponent(btnTambah))
-                .addGap(31, 31, 31))
+                        .addGap(33, 33, 33)
+                        .addComponent(lblPreviewGambar, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnPilihGambar)
+                        .addGap(44, 44, 44))))
         );
 
         pack();
@@ -257,7 +301,7 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
                 return;
             }
 
-            Equipment eq = new Equipment(0, nama, kategori, harga, totalStok, stokTersedia);
+            Equipment eq = new Equipment(0, nama, kategori, harga, totalStok, stokTersedia, currentImagePath);
             if (equipmentRepo.addEquipment(eq)) {
                 JOptionPane.showMessageDialog(this, "Alat berhasil ditambahkan!");
                 loadDataAlat();
@@ -273,12 +317,16 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     private void tabelAlatMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelAlatMouseClicked
         int row = tabelAlat.getSelectedRow();
         if (row != -1) {
-            selectedEquipmentId = Integer.parseInt(tabelAlat.getValueAt(row, 0).toString());
-            fieldNama.setText(tabelAlat.getValueAt(row, 1).toString());
-            comboKategori.setSelectedItem(tabelAlat.getValueAt(row, 2).toString());
-            fieldHarga.setText(String.format("%.0f", Double.parseDouble(tabelAlat.getValueAt(row, 3).toString())));
-            fieldTotalStok.setText(tabelAlat.getValueAt(row, 4).toString());
-            fieldStokTersedia.setText(tabelAlat.getValueAt(row, 5).toString());
+            Equipment eq = equipmentList.get(row);
+            selectedEquipmentId = eq.getId();
+            fieldNama.setText(eq.getName());
+            comboKategori.setSelectedItem(eq.getCategory());
+            fieldHarga.setText(String.format("%.0f", eq.getPricePerDay()));
+            fieldTotalStok.setText(String.valueOf(eq.getTotalStock()));
+            fieldStokTersedia.setText(String.valueOf(eq.getAvailableStock()));
+
+            currentImagePath = eq.getImagePath();
+            tampilkanGambar(currentImagePath);
         }
     }//GEN-LAST:event_tabelAlatMouseClicked
 
@@ -300,7 +348,7 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
                 return;
             }
 
-            Equipment eq = new Equipment(selectedEquipmentId, nama, kategori, harga, totalStok, stokTersedia);
+            Equipment eq = new Equipment(selectedEquipmentId, nama, kategori, harga, totalStok, stokTersedia, currentImagePath);
             if (equipmentRepo.updateEquipment(eq)) {
                 JOptionPane.showMessageDialog(this, "Data alat berhasil diperbarui!");
                 loadDataAlat();
@@ -345,6 +393,32 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     
     }//GEN-LAST:event_btnKembaliActionPerformed
 
+    private void btnPilihGambarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPilihGambarActionPerformed
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("File Gambar (JPG, PNG)", "jpg", "jpeg", "png"));
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                // Buat folder 'images' di direktori proyek jika belum ada
+                File folderImages = new File("images");
+                if (!folderImages.exists()) {
+                    folderImages.mkdirs();
+                }
+
+                // Beri nama unik agar tidak menimpa file lain
+                String newFileName = System.currentTimeMillis() + "_" + selectedFile.getName();
+                File destFile = new File(folderImages, newFileName);
+                Files.copy(selectedFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                currentImagePath = "images/" + newFileName;
+                tampilkanGambar(currentImagePath);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Gagal memuat gambar: " + e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnPilihGambarActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -373,6 +447,7 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnHapus;
     private javax.swing.JButton btnKembali;
+    private javax.swing.JButton btnPilihGambar;
     private javax.swing.JButton btnReset;
     private javax.swing.JButton btnTambah;
     private javax.swing.JButton btnUbah;
@@ -386,6 +461,7 @@ public class EquipmentManagementFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblPreviewGambar;
     private javax.swing.JTable tabelAlat;
     // End of variables declaration//GEN-END:variables
 }

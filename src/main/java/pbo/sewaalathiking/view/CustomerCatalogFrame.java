@@ -11,6 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
 
 /**
  *
@@ -20,6 +26,7 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CustomerCatalogFrame.class.getName());
 
+    private List<Equipment> availableEquipmentList;
     private User currentUser;
     private List<Object[]> cartList;
     private final EquipmentRepository equipmentRepo = new EquipmentRepository();
@@ -63,8 +70,9 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) tabelAlat.getModel();
         model.setRowCount(0);
 
-        List<Equipment> list = equipmentRepo.getAvailableEquipment();
-        for (Equipment eq : list) {
+        // Wajib disimpan ke field class 'availableEquipmentList', bukan variabel lokal baru
+        availableEquipmentList = equipmentRepo.getAvailableEquipment();
+        for (Equipment eq : availableEquipmentList) {
             model.addRow(new Object[]{
                 eq.getId(),
                 eq.getName(),
@@ -104,6 +112,7 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
         searchField = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         jComboBox1 = new javax.swing.JComboBox<>();
+        lblGambarAlat = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -124,6 +133,11 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
+            }
+        });
+        tabelAlat.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tabelAlatMouseClicked(evt);
             }
         });
         jScrollPane1.setViewportView(tabelAlat);
@@ -192,6 +206,8 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
                 .addGap(15, 15, 15))
         );
 
+        lblGambarAlat.setText("jLabel5");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -212,7 +228,12 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(33, 33, 33)
                                 .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(btnTambahKeranjang))))
+                            .addComponent(btnTambahKeranjang))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(62, 62, 62)
+                        .addComponent(lblGambarAlat, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 419, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
         );
@@ -222,7 +243,13 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(37, 37, 37)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(49, 49, 49)
+                        .addComponent(lblGambarAlat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(52, 52, 52)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(fieldQty, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -230,11 +257,7 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
                         .addComponent(btnTambahKeranjang)
                         .addGap(53, 53, 53)
                         .addComponent(btnLihatKeranjang)
-                        .addGap(31, 31, 31))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(37, 37, 37)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)))
+                        .addGap(31, 31, 31)))
                 .addComponent(btnKembali)
                 .addGap(42, 42, 42))
         );
@@ -296,6 +319,35 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btnLihatKeranjangActionPerformed
 
+    private void tabelAlatMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelAlatMouseClicked
+        int row = tabelAlat.getSelectedRow();
+        if (row != -1 && availableEquipmentList != null && row < availableEquipmentList.size()) {
+            String path = availableEquipmentList.get(row).getImagePath();
+
+            if (path != null && !path.isEmpty()) {
+                try {
+                    File file = new File(path);
+                    if (file.exists()) {
+                        BufferedImage img = ImageIO.read(file);
+                        if (img != null) {
+                            int w = lblGambarAlat.getWidth() > 0 ? lblGambarAlat.getWidth() : 160;
+                            int h = lblGambarAlat.getHeight() > 0 ? lblGambarAlat.getHeight() : 160;
+                            Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+                            lblGambarAlat.setIcon(new ImageIcon(scaled));
+                            lblGambarAlat.setText("");
+                            return;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Gagal memuat gambar katalog: " + e.getMessage());
+                }
+            }
+
+            lblGambarAlat.setIcon(null);
+            lblGambarAlat.setText("Tidak ada gambar");
+        }
+    }//GEN-LAST:event_tabelAlatMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -333,6 +385,7 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblGambarAlat;
     private javax.swing.JTextField searchField;
     private javax.swing.JTable tabelAlat;
     // End of variables declaration//GEN-END:variables

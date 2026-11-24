@@ -29,7 +29,8 @@ public class EquipmentRepository {
                     rs.getString("category"),
                     rs.getDouble("price_per_day"),
                     rs.getInt("total_stock"),
-                    rs.getInt("available_stock")
+                    rs.getInt("available_stock"),
+                    rs.getString("image_path")
                 ));
             }
         } catch (SQLException e) {
@@ -37,6 +38,7 @@ public class EquipmentRepository {
         }
         return list;
     }
+
     public List<Equipment> getAvailableEquipment() {
         List<Equipment> list = new ArrayList<>();
         String query = "SELECT * FROM equipment WHERE available_stock > 0 ORDER BY category, name";
@@ -52,7 +54,8 @@ public class EquipmentRepository {
                     rs.getString("category"),
                     rs.getDouble("price_per_day"),
                     rs.getInt("total_stock"),
-                    rs.getInt("available_stock")
+                    rs.getInt("available_stock"),
+                    rs.getString("image_path")
                 ));
             }
         } catch (SQLException e) {
@@ -60,9 +63,9 @@ public class EquipmentRepository {
         }
         return list;
     }
-    // 1. Tambah Alat Baru (Stok tersedia awal sama dengan total stok)
+
     public boolean addEquipment(Equipment eq) {
-        String query = "INSERT INTO equipment (name, category, price_per_day, total_stock, available_stock) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO equipment (name, category, price_per_day, total_stock, available_stock, image_path) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -72,6 +75,7 @@ public class EquipmentRepository {
             pstmt.setDouble(3, eq.getPricePerDay());
             pstmt.setInt(4, eq.getTotalStock());
             pstmt.setInt(5, eq.getAvailableStock());
+            pstmt.setString(6, eq.getImagePath());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -80,9 +84,8 @@ public class EquipmentRepository {
         }
     }
 
-    // 2. Update Data Alat (Nama, Kategori, Harga, Total Stok, & Stok Tersedia)
     public boolean updateEquipment(Equipment eq) {
-        String query = "UPDATE equipment SET name = ?, category = ?, price_per_day = ?, total_stock = ?, available_stock = ? WHERE id = ?";
+        String query = "UPDATE equipment SET name = ?, category = ?, price_per_day = ?, total_stock = ?, available_stock = ?, image_path = ? WHERE id = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -92,11 +95,12 @@ public class EquipmentRepository {
             pstmt.setDouble(3, eq.getPricePerDay());
             pstmt.setInt(4, eq.getTotalStock());
             pstmt.setInt(5, eq.getAvailableStock());
-            pstmt.setInt(6, eq.getId());
+            pstmt.setString(6, eq.getImagePath());
+            pstmt.setInt(7, eq.getId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Gagal mengubah data alat: " + e.getMessage());
+            System.err.println("Gagal mengupdate alat: " + e.getMessage());
             return false;
         }
     }
