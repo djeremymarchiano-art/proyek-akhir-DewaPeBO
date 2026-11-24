@@ -1,6 +1,7 @@
 pbo\sewaalathiking\repository\NotificationRepository.class
 pbo\sewaalathiking\entity\RentalTransaction.class
 pbo\sewaalathiking\view\EquipmentManagementFrame$2.class
+pbo\sewaalathiking\view\RegisterFrame.class
 pbo\sewaalathiking\view\AdminTransactionFrame$1.class
 pbo\sewaalathiking\repository\EquipmentRepository.class
 pbo\sewaalathiking\SewaAlatHiking.class
