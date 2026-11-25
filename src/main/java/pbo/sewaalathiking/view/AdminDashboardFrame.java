@@ -27,7 +27,7 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
         initComponents();
         this.currentUser = user;
         this.setLocationRelativeTo(null);
-        lblWelcome.setText("Halo, Admin " + currentUser.getName());
+        lblWelcome.setText("Welcome, Admin " + currentUser.getName());
     }
 
     /**
@@ -44,9 +44,9 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
         btnLogout = new javax.swing.JButton();
         btnNotifikasi = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
-        lblWelcome = new javax.swing.JLabel();
+        jlabel3 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        lblWelcome = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -72,17 +72,17 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(45, 106, 79));
 
-        lblWelcome.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblWelcome.setForeground(new java.awt.Color(255, 255, 255));
-        lblWelcome.setText("Timur Outdoor");
+        jlabel3.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        jlabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jlabel3.setText("Timur Outdoor");
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(216, 243, 220));
         jLabel1.setText("Dashboard Admin");
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
-        jLabel2.setForeground(new java.awt.Color(216, 243, 220));
-        jLabel2.setText("Welcome, Admin!");
+        lblWelcome.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
+        lblWelcome.setForeground(new java.awt.Color(216, 243, 220));
+        lblWelcome.setText("Welcome, Admin!");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -91,10 +91,10 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(14, 14, 14)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblWelcome)
+                    .addComponent(jlabel3)
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel2)
+                .addComponent(lblWelcome)
                 .addGap(28, 28, 28))
         );
         jPanel1Layout.setVerticalGroup(
@@ -102,8 +102,8 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblWelcome, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
+                    .addComponent(jlabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblWelcome))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addContainerGap(15, Short.MAX_VALUE))
@@ -206,8 +206,8 @@ public class AdminDashboardFrame extends javax.swing.JFrame {
     private javax.swing.JButton btnNotifikasi;
     private javax.swing.JButton btnTransaksi;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JLabel jlabel3;
     private javax.swing.JLabel lblWelcome;
     // End of variables declaration//GEN-END:variables
 }
