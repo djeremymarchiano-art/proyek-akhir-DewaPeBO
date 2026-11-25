@@ -26,21 +26,23 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CustomerCatalogFrame.class.getName());
 
-    private List<Equipment> availableEquipmentList;
+    private List<Equipment> availableEquipmentList = new ArrayList<>();
+    private List<Equipment> filteredEquipmentList = new ArrayList<>();
     private User currentUser;
     private List<Object[]> cartList;
     private final EquipmentRepository equipmentRepo = new EquipmentRepository();
+    private boolean isUpdatingFilter = false;
     
     /**
      * Creates new form CustomerCatalogueFrame
      */
     public CustomerCatalogFrame() {
         initComponents();
-    tabelAlat.setRowHeight(30);
-    tabelAlat.setSelectionBackground(new java.awt.Color(216, 243, 220));
-    tabelAlat.setSelectionForeground(new java.awt.Color(27, 67, 50));
-    tabelAlat.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        styleTableAndPreview();
         this.setLocationRelativeTo(null);
+        setupTable();
+        setupSearchAndFilter();
+        loadKatalogAlat();
     }
     
     public CustomerCatalogFrame(User user) {
@@ -49,18 +51,89 @@ public class CustomerCatalogFrame extends javax.swing.JFrame {
     
     public CustomerCatalogFrame(User user, List<Object[]> existingCart) {
         initComponents();
-
-tabelAlat.setRowHeight(30);
-tabelAlat.setSelectionBackground(new java.awt.Color(216, 243, 220));
-tabelAlat.setSelectionForeground(new java.awt.Color(27, 67, 50));
-tabelAlat.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        styleTableAndPreview();
         this.currentUser = user;
         this.cartList = (existingCart != null) ? existingCart : new ArrayList<>();
         this.setLocationRelativeTo(null);
 
         setupTable();
+        setupSearchAndFilter();
         loadKatalogAlat();
         updateCartButtonLabel();
+    }
+
+    private void styleTableAndPreview() {
+        tabelAlat.setRowHeight(30);
+        tabelAlat.setSelectionBackground(new java.awt.Color(216, 243, 220));
+        tabelAlat.setSelectionForeground(new java.awt.Color(27, 67, 50));
+        tabelAlat.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        lblGambarAlat.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        resetSelectionPreview();
+    }
+
+    private void resetSelectionPreview() {
+        lblItemTerpilih.setText("Item Terpilih: -");
+        lblGambarAlat.setIcon(null);
+        lblGambarAlat.setText("Pilih alat untuk lihat gambar");
+    }
+
+    private void setupSearchAndFilter() {
+        isUpdatingFilter = true;
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(
+            new String[]{"Semua Kategori", "Tenda", "Tas Gunung", "Alat Tidur", "Alat Masak", "Penerangan", "Lainnya"}
+        ));
+        isUpdatingFilter = false;
+
+        searchField.setToolTipText("Ketik nama atau kategori alat...");
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+        });
+
+        jComboBox1.addActionListener(e -> {
+            if (!isUpdatingFilter) {
+                applyFilter();
+            }
+        });
+    }
+
+    private void syncCategoryComboBox() {
+        isUpdatingFilter = true;
+        Object currentSelection = jComboBox1.getSelectedItem();
+        javax.swing.DefaultComboBoxModel<String> model = (javax.swing.DefaultComboBoxModel<String>) jComboBox1.getModel();
+
+        for (Equipment eq : availableEquipmentList) {
+            String cat = eq.getCategory();
+            if (cat != null && !cat.trim().isEmpty()) {
+                boolean exists = false;
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (model.getElementAt(i).equalsIgnoreCase(cat.trim())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    model.addElement(cat.trim());
+                }
+            }
+        }
+
+        if (currentSelection != null) {
+            jComboBox1.setSelectedItem(currentSelection);
+        }
+        isUpdatingFilter = false;
     }
     
     private void setupTable() {
@@ -76,20 +149,43 @@ tabelAlat.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.B
     }
     
     private void loadKatalogAlat() {
+        availableEquipmentList = equipmentRepo.getAvailableEquipment();
+        syncCategoryComboBox();
+        applyFilter();
+    }
+
+    private void applyFilter() {
         DefaultTableModel model = (DefaultTableModel) tabelAlat.getModel();
         model.setRowCount(0);
+        filteredEquipmentList.clear();
 
-        // Wajib disimpan ke field class 'availableEquipmentList', bukan variabel lokal baru
-        availableEquipmentList = equipmentRepo.getAvailableEquipment();
+        String keyword = searchField.getText().trim().toLowerCase();
+        String selectedCategory = (jComboBox1.getSelectedItem() != null)
+                ? jComboBox1.getSelectedItem().toString()
+                : "Semua Kategori";
+
         for (Equipment eq : availableEquipmentList) {
-            model.addRow(new Object[]{
-                eq.getId(),
-                eq.getName(),
-                eq.getCategory(),
-                eq.getPricePerDay(),
-                eq.getAvailableStock()
-            });
+            boolean matchesCategory = "Semua Kategori".equalsIgnoreCase(selectedCategory)
+                    || (eq.getCategory() != null && eq.getCategory().equalsIgnoreCase(selectedCategory));
+
+            boolean matchesKeyword = keyword.isEmpty()
+                    || (eq.getName() != null && eq.getName().toLowerCase().contains(keyword))
+                    || (eq.getCategory() != null && eq.getCategory().toLowerCase().contains(keyword))
+                    || String.valueOf(eq.getId()).contains(keyword);
+
+            if (matchesCategory && matchesKeyword) {
+                filteredEquipmentList.add(eq);
+                model.addRow(new Object[]{
+                    eq.getId(),
+                    eq.getName(),
+                    eq.getCategory(),
+                    eq.getPricePerDay(),
+                    eq.getAvailableStock()
+                });
+            }
         }
+
+        resetSelectionPreview();
     }
     
     private void updateCartButtonLabel() {
@@ -387,34 +483,34 @@ tabelAlat.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.B
 
     private void tabelAlatMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelAlatMouseClicked
         int row = tabelAlat.getSelectedRow();
-if (row != -1 && availableEquipmentList != null && row < availableEquipmentList.size()) {
-    String namaAlat = tabelAlat.getValueAt(row, 1).toString();
-    lblItemTerpilih.setText("Item Terpilih: " + namaAlat);
+        if (row != -1 && filteredEquipmentList != null && row < filteredEquipmentList.size()) {
+            Equipment selectedEq = filteredEquipmentList.get(row);
+            lblItemTerpilih.setText("Item Terpilih: " + selectedEq.getName());
 
-    String path = availableEquipmentList.get(row).getImagePath();
+            String path = selectedEq.getImagePath();
 
-    if (path != null && !path.isEmpty()) {
-        try {
-            File file = new File(path);
-            if (file.exists()) {
-                BufferedImage img = ImageIO.read(file);
-                if (img != null) {
-                    int w = lblGambarAlat.getWidth() > 0 ? lblGambarAlat.getWidth() : 160;
-                    int h = lblGambarAlat.getHeight() > 0 ? lblGambarAlat.getHeight() : 160;
-                    Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
-                    lblGambarAlat.setIcon(new ImageIcon(scaled));
-                    lblGambarAlat.setText("");
-                    return;
+            if (path != null && !path.isEmpty()) {
+                try {
+                    File file = new File(path);
+                    if (file.exists()) {
+                        BufferedImage img = ImageIO.read(file);
+                        if (img != null) {
+                            int w = lblGambarAlat.getWidth() > 0 ? lblGambarAlat.getWidth() : 160;
+                            int h = lblGambarAlat.getHeight() > 0 ? lblGambarAlat.getHeight() : 160;
+                            Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+                            lblGambarAlat.setIcon(new ImageIcon(scaled));
+                            lblGambarAlat.setText("");
+                            return;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Gagal memuat gambar katalog: " + e.getMessage());
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Gagal memuat gambar katalog: " + e.getMessage());
-        }
-    }
 
-    lblGambarAlat.setIcon(null);
-    lblGambarAlat.setText("Tidak ada gambar");
-}
+            lblGambarAlat.setIcon(null);
+            lblGambarAlat.setText("Tidak ada gambar");
+        }
     }//GEN-LAST:event_tabelAlatMouseClicked
 
     private void jScrollPane2PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jScrollPane2PropertyChange

@@ -40,7 +40,20 @@ public class CustomerHistoryFrame extends javax.swing.JFrame {
         tabelRiwayat.setShowVerticalLines(false); // Menghilangkan garis vertikal agar terlihat modern
         this.currentUser = user;
         this.setLocationRelativeTo(null);
+        setupTable();
         loadRiwayat();
+    }
+
+    private void setupTable() {
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{"ID Sewa", "Mulai", "Batas Kembali", "Dikembalikan", "Biaya Sewa", "Denda", "Status"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        tabelRiwayat.setModel(model);
     }
     
     private void loadRiwayat() {

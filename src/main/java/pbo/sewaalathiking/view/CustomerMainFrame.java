@@ -5,6 +5,7 @@
 package pbo.sewaalathiking.view;
 
 import pbo.sewaalathiking.entity.User;
+import pbo.sewaalathiking.repository.NotificationRepository;
 import javax.swing.JOptionPane;
 
 /**
@@ -16,6 +17,7 @@ public class CustomerMainFrame extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CustomerMainFrame.class.getName());
 
     private User currentUser;
+    private final NotificationRepository notifRepo = new NotificationRepository();
     
     /**
      * Creates new form CustomerMainFrame
@@ -30,6 +32,17 @@ public class CustomerMainFrame extends javax.swing.JFrame {
         this.currentUser = user;
         this.setLocationRelativeTo(null);
         lblWelcome.setText("Selamat Datang, " + currentUser.getName());
+        updateNotifBadge();
+    }
+
+    private void updateNotifBadge() {
+        if (currentUser == null) return;
+        int unread = notifRepo.getUnreadCount(currentUser.getId());
+        if (unread > 0) {
+            btnNotifikasi.setText("Notifikasi Pengingat (" + unread + ")");
+        } else {
+            btnNotifikasi.setText("Notifikasi Pengingat");
+        }
     }
 
     /**

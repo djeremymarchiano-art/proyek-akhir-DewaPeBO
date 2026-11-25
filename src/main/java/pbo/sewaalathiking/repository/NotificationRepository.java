@@ -60,4 +60,20 @@ public class NotificationRepository {
             return false;
         }
     }
+
+    public int getUnreadCount(int userId) {
+        String query = "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = FALSE AND scheduled_time <= NOW()";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Gagal menghitung notifikasi belum dibaca: " + e.getMessage());
+        }
+        return 0;
+    }
 }

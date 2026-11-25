@@ -45,7 +45,24 @@ public class NotificationFrame extends javax.swing.JFrame {
         tabelNotifikasi.getColumnModel().getColumn(3).setPreferredWidth(90);      
         this.currentUser = user;
         this.setLocationRelativeTo(null);
+        setupTable();
         loadNotifikasi();
+    }
+
+    private void setupTable() {
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{"ID", "Waktu", "Pengingat", "Status"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        tabelNotifikasi.setModel(model);
+        tabelNotifikasi.getColumnModel().getColumn(0).setPreferredWidth(45);
+        tabelNotifikasi.getColumnModel().getColumn(1).setPreferredWidth(120);
+        tabelNotifikasi.getColumnModel().getColumn(2).setPreferredWidth(360);
+        tabelNotifikasi.getColumnModel().getColumn(3).setPreferredWidth(90);
     }
     
     private void loadNotifikasi() {
